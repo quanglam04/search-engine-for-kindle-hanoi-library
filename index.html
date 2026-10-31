@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Thư viện sách Kindle</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Be+Vietnam+Pro:wght@400;500;600&display=swap"
+    />
+    <style>
+      /* Layout: one centered column — dedication, search bar, results. Nothing else. */
+      :root {
+        --bg-1: #fff1ee;
+        --bg-2: #f6e8f7;
+        --bg-3: #eef0fd;
+        --surface: rgba(255, 255, 255, 0.72);
+        --fg: #3a2433;
+        --fg-muted: #8a6f80;
+        --accent: #d9467a;
+        --accent-soft: rgba(217, 70, 122, 0.14);
+        --line: rgba(58, 36, 51, 0.1);
+        --font-display: "Fraunces", Georgia, serif;
+        --font-body: "Be Vietnam Pro", system-ui, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg-1: #1f1320;
+          --bg-2: #1a1428;
+          --bg-3: #131726;
+          --surface: rgba(255, 255, 255, 0.06);
+          --fg: #f5e6ee;
+          --fg-muted: #b497a8;
+          --accent: #ff7aa8;
+          --accent-soft: rgba(255, 122, 168, 0.18);
+          --line: rgba(255, 255, 255, 0.1);
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg-1: #1f1320;
+        --bg-2: #1a1428;
+        --bg-3: #131726;
+        --surface: rgba(255, 255, 255, 0.06);
+        --fg: #f5e6ee;
+        --fg-muted: #b497a8;
+        --accent: #ff7aa8;
+        --accent-soft: rgba(255, 122, 168, 0.18);
+        --line: rgba(255, 255, 255, 0.1);
+        color-scheme: dark;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg-1);
+        background-image:
+          radial-gradient(
+            60rem 40rem at 10% -10%,
+            var(--bg-1),
+            transparent 70%
+          ),
+          radial-gradient(
+            50rem 40rem at 100% 10%,
+            var(--bg-2),
+            transparent 70%
+          ),
+          linear-gradient(180deg, var(--bg-2), var(--bg-3));
+        background-attachment: fixed;
+        color: var(--fg);
+        font-family: var(--font-body);
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+        padding-block: 0;
+      }
+
+      .wrap {
+        max-width: 640px;
+        margin: 0 auto;
+        padding-block: 14vh 64px;
+        transition: padding 0.35s ease;
+      }
+      .wrap.searched {
+        padding-block-start: 40px;
+      }
+
+      .dedication {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+      .dedication h1 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: clamp(2rem, 7vw, 2.8rem);
+        letter-spacing: -0.02em;
+        margin: 0;
+        text-wrap: balance;
+      }
+      .dedication p {
+        font-family: var(--font-display);
+        font-style: italic;
+        color: var(--fg-muted);
+        margin: 8px 0 0;
+        font-size: 1rem;
+      }
+      .dedication .total {
+        font-family: var(--font-body);
+        font-style: normal;
+        font-size: 0.8125rem;
+        margin-top: 4px;
+        font-variant-numeric: tabular-nums;
+      }
+      .dedication .heart {
+        color: var(--accent);
+        font-style: normal;
+      }
+
+      .search {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 6px 6px 20px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 10px 30px -12px var(--accent-soft);
+      }
+      .search:focus-within {
+        border-color: var(--accent);
+      }
+      .search input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: var(--fg);
+        font: 400 1rem var(--font-body);
+        outline: none;
+        padding-block: 8px;
+      }
+      .search input::placeholder {
+        color: var(--fg-muted);
+      }
+      .search button {
+        border: 0;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        font: 600 0.9rem var(--font-body);
+        padding: 10px 22px;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .search button:hover {
+        filter: brightness(1.05);
+      }
+      .search button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+      .search button:focus-visible,
+      .result a:focus-visible,
+      .more:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .note {
+        text-align: center;
+        margin-top: 14px;
+        font-size: 0.8125rem;
+        color: var(--fg-muted);
+        line-height: 1.7;
+      }
+      .note a {
+        color: var(--accent);
+        text-underline-offset: 2px;
+      }
+      .note code {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 6px;
+        color: var(--fg);
+        user-select: all;
+      }
+      .count {
+        text-align: center;
+        color: var(--fg-muted);
+        font-size: 0.8125rem;
+        margin: 18px 0 6px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .results {
+        display: flex;
+        flex-direction: column;
+      }
+      .result {
+        padding: 14px 4px;
+        border-bottom: 1px solid var(--line);
+        min-width: 0;
+      }
+      .result:last-of-type {
+        border-bottom: 0;
+      }
+      .result .title {
+        font-family: var(--font-display);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--fg);
+        text-decoration: none;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+      .result .title:hover {
+        color: var(--accent);
+      }
+      .result mark {
+        background: var(--accent-soft);
+        color: inherit;
+        border-radius: 3px;
+        padding: 0 1px;
+      }
+      .result .sub {
+        color: var(--fg-muted);
+        font-size: 0.8125rem;
+        margin-top: 3px;
+        overflow-wrap: anywhere;
+      }
+      .result .sub a {
+        color: inherit;
+        text-decoration: underline;
+        text-decoration-color: var(--line);
+        text-underline-offset: 2px;
+      }
+      .result .sub a:hover {
+        color: var(--accent);
+      }
+
+      .empty {
+        text-align: center;
+        color: var(--fg-muted);
+        padding: 32px 0;
+        font-family: var(--font-display);
+        font-style: italic;
+      }
+
+      .more {
+        display: block;
+        margin: 18px auto 0;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--fg);
+        font: 500 0.8125rem var(--font-body);
+        padding: 8px 18px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .wrap {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap" id="wrap">
+      <header class="dedication">
+        <h1>Thư viện sách Kindle</h1>
+        <p>From My's boyfriend, with love</p>
+        <p class="total" id="total">Tổng số sách: …</p>
+      </header>
+
+      <form class="search" id="search-form">
+        <input
+          id="search"
+          type="search"
+          placeholder="Gõ tên sách vào đây nha"
+          autocomplete="off"
+          autofocus
+        />
+        <button type="submit">Tìm</button>
+      </form>
+
+      <div class="note">
+        <a
+          href="https://1drv.ms/f/c/8507f1bd4112942d/IgDEz6AvCeC2QK-RiZvrctjXAUws5GoQY_QvlDi-5U8Rjck?e=ZySF5v"
+          target="_blank"
+          rel="noopener"
+          >Truy cập thư viện nếu lần đầu vào</a
+        >
+        <div>Mật khẩu: <code>sachchu2018!</code></div>
+      </div>
+
+      <div class="count" id="count" hidden></div>
+      <div class="results" id="results"></div>
+    </main>
+
+    <script>
+      (function () {
+        const $ = (s) => document.querySelector(s);
+        const ROOT_URL =
+          "https://onedrive.live.com/shared?id=%2Fpersonal%2F8507f1bd4112942d%2FDocuments%2F3%2E%20S%C3%A1ch%20ch%E1%BB%AF&listurl=%2Fpersonal%2F8507f1bd4112942d%2FDocuments&viewid=a60b7132-a600-4ed4-9825-f841466b976c";
+
+        let catalog = [];
+        let lastItems = [];
+        let lastRanges = new Map();
+        let limit = 50;
+
+        // ---------- Load catalog ----------
+        // data.json nằm cùng thư mục với index.html
+        const searchBtn = $("#search-form button");
+        searchBtn.disabled = true;
+        searchBtn.textContent = "Đang tải…";
+        fetch("data.json")
+          .then((r) => {
+            if (!r.ok) throw new Error(r.status);
+            return r.json();
+          })
+          .then((list) => {
+            catalog = normalize(list);
+            $("#total").textContent =
+              "Tổng số sách: " + catalog.length.toLocaleString("vi-VN");
+            searchBtn.disabled = false;
+            searchBtn.textContent = "Tìm";
+          })
+          .catch(() => {
+            searchBtn.textContent = "Tìm";
+            $("#results").innerHTML =
+              '<div class="empty">Không tải được danh sách sách (data.json). Thử tải lại trang nha.</div>';
+          });
+
+        // Gộp folder là 1 cuốn sách chia chương thành 1 mục
+        const CHAPTER =
+          /^(chapter|chuong|chương|phan|phần|part|ch[\s._-]?\d|\d{1,3}[\s._-])/i;
+        function normalize(list) {
+          const byFolder = new Map();
+          for (const b of list) {
+            const k = b.folder || "(root)";
+            if (!byFolder.has(k)) byFolder.set(k, []);
+            byFolder.get(k).push(b);
+          }
+          const out = [];
+          for (const [folder, items] of byFolder) {
+            const ch = items.filter((b) => CHAPTER.test(b.fileName || ""));
+            if (
+              folder !== "(root)" &&
+              items.length >= 3 &&
+              ch.length / items.length >= 0.6
+            ) {
+              const leaf = folder.split(" / ").pop();
+              const i = leaf.lastIndexOf(" - ");
+              out.push({
+                fileName: leaf,
+                folder,
+                relativePath: (items[0].relativePath || "")
+                  .split("/")
+                  .slice(0, -1)
+                  .join("/"),
+                title: i > 0 ? leaf.slice(0, i) : leaf,
+                author: i > 0 ? leaf.slice(i + 3) : null,
+                isBookFolder: true,
+              });
+            } else out.push(...items);
+          }
+          return out.map((b) => {
+            const title = (b.title || b.fileName || "")
+              .replace(/_+/g, " ")
+              .replace(/\s+/g, " ")
+              .trim();
+            return {
+              ...b,
+              title,
+              _t: fold(title),
+              _a: fold(b.author || ""),
+              _f: fold(b.fileName || ""),
+              _d: fold(b.folder || ""),
+            };
+          });
+        }
+
+        // ---------- Search ----------
+        // Bỏ dấu, giữ nguyên độ dài để highlight đúng vị trí
+        function fold(s) {
+          return s
+            .split("")
+            .map((c) =>
+              c === "đ" || c === "Đ"
+                ? "d"
+                : c.normalize("NFD")[0].toLowerCase(),
+            )
+            .join("");
+        }
+
+        function match(lower, q, words) {
+          if (!lower) return null;
+          const idx = lower.indexOf(q);
+          if (idx !== -1)
+            return {
+              score: 100 + (q.length / lower.length) * 50,
+              ranges: [[idx, idx + q.length]],
+            };
+          const ranges = [];
+          let s = 0;
+          let all = words.length > 0;
+          for (const w of words) {
+            const wi = lower.indexOf(w);
+            if (wi === -1) {
+              all = false;
+              break;
+            }
+            s += w.length;
+            ranges.push([wi, wi + w.length]);
+          }
+          if (all)
+            return {
+              score: 50 + s,
+              ranges: merge(ranges.sort((x, y) => x[0] - y[0])),
+            };
+          let qi = 0;
+          s = 0;
+          const fr = [];
+          for (let i = 0; i < lower.length && qi < q.length; i++) {
+            if (lower[i] === q[qi]) {
+              s += i === 0 || lower[i - 1] === " " ? 3 : 1;
+              fr.push([i, i + 1]);
+              qi++;
+            }
+          }
+          return qi === q.length ? { score: s, ranges: merge(fr) } : null;
+        }
+
+        function merge(r) {
+          const out = [];
+          for (const x of r) {
+            const last = out[out.length - 1];
+            if (last && x[0] <= last[1]) last[1] = Math.max(last[1], x[1]);
+            else out.push([...x]);
+          }
+          return out;
+        }
+
+        $("#search-form").addEventListener("submit", (e) => {
+          e.preventDefault();
+          const query = $("#search").value.trim();
+          if (!query) return;
+          if (!catalog.length) {
+            $("#results").innerHTML =
+              '<div class="empty">Danh sách sách đang tải, đợi xíu rồi bấm Tìm lại nha.</div>';
+            return;
+          }
+          const q = fold(query);
+          const words = q.split(/\s+/).filter(Boolean);
+          const hits = [];
+          lastRanges = new Map();
+          for (const b of catalog) {
+            const t = match(b._t, q, words);
+            const a = match(b._a, q, words);
+            const f = match(b._f, q, words);
+            const d = b._d.includes(q);
+            if (!t && !a && !f && !d) continue;
+            const score = Math.max(
+              t ? t.score : 0,
+              a ? a.score * 0.8 : 0,
+              f ? f.score * 0.6 : 0,
+              d ? 40 : 0,
+            );
+            hits.push({ b, score });
+            lastRanges.set(b, { t: t ? t.ranges : [], a: a ? a.ranges : [] });
+          }
+          hits.sort((x, y) => y.score - x.score);
+          lastItems = hits.map((h) => h.b);
+          limit = 50;
+          $("#wrap").classList.add("searched");
+          paint();
+        });
+
+        // ---------- Links ----------
+        function odLink(dirRel, fileRel) {
+          const u = new URL(ROOT_URL);
+          const root = u.searchParams.get("id");
+          const folderId = dirRel ? root + "/" + dirRel : root;
+          if (fileRel) {
+            u.searchParams.set("id", root + "/" + fileRel);
+            u.searchParams.set("parent", folderId);
+          } else u.searchParams.set("id", folderId);
+          return u.toString();
+        }
+
+        // ---------- Render ----------
+        function esc(s) {
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+        function hl(text, ranges) {
+          if (!ranges || !ranges.length) return esc(text);
+          let out = "",
+            last = 0;
+          for (const [s, e] of ranges) {
+            out +=
+              esc(text.slice(last, s)) +
+              "<mark>" +
+              esc(text.slice(s, e)) +
+              "</mark>";
+            last = e;
+          }
+          return out + esc(text.slice(last));
+        }
+
+        function paint() {
+          const items = lastItems;
+          const countEl = $("#count");
+          countEl.hidden = false;
+          countEl.textContent = items.length
+            ? `Tìm thấy ${items.length.toLocaleString("vi-VN")} cuốn. Bấm vào tên sách để tải`
+            : "";
+          if (!items.length) {
+            $("#results").innerHTML =
+              '<div class="empty">Chưa tìm thấy cuốn nào, chắc là không có rùi.</div>';
+            return;
+          }
+          const html = items
+            .slice(0, limit)
+            .map((b) => {
+              const r = lastRanges.get(b) || {};
+              const dirRel = b.isBookFolder
+                ? b.relativePath || ""
+                : (b.relativePath || "").split("/").slice(0, -1).join("/");
+              const bookUrl = b.isBookFolder
+                ? odLink(dirRel)
+                : odLink(dirRel, b.relativePath);
+              const folderUrl = odLink(dirRel);
+              const author = b.author ? hl(b.author, r.a) + " · " : "";
+              return `<div class="result">
+        <a class="title" href="${esc(bookUrl)}" target="_blank" rel="noopener">${hl(b.title, r.t)}</a>
+        <div class="sub">${author}<a href="${esc(folderUrl)}" target="_blank" rel="noopener">${esc(b.folder || "3. Sách chữ")}</a></div>
+      </div>`;
+            })
+            .join("");
+          const more =
+            items.length > limit
+              ? `<button class="more" id="more-btn" type="button">Xem thêm (${(items.length - limit).toLocaleString("vi-VN")} cuốn nữa)</button>`
+              : "";
+          $("#results").innerHTML = html + more;
+        }
+
+        $("#results").addEventListener("click", (e) => {
+          if (e.target.closest("#more-btn")) {
+            limit += 50;
+            paint();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
